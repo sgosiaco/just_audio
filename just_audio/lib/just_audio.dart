@@ -612,12 +612,12 @@ class AudioPlayer {
   }
 
   /// Sets whether shuffle mode is enabled.
-  Future<void> setShuffleModeEnabled(bool enabled) async {
-    if (_disposed) return;
+  Future<List<int>> setShuffleModeEnabled(bool enabled) async {
+    if (_disposed) return [];
     _shuffleModeEnabledSubject.add(enabled);
-    await (await _platform).setShuffleMode(SetShuffleModeRequest(
+    return (await (await _platform).setShuffleMode(SetShuffleModeRequest(
         shuffleMode:
-            enabled ? ShuffleModeMessage.all : ShuffleModeMessage.none));
+            enabled ? ShuffleModeMessage.all : ShuffleModeMessage.none))).shuffleIndices;
   }
 
   /// Sets automaticallyWaitsToMinimizeStalling for AVPlayer in iOS 10.0 or later, defaults to true.

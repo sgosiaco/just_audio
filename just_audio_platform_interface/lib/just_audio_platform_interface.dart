@@ -424,8 +424,14 @@ class SetShuffleModeRequest {
 /// Information returned by the platform implementation after setting the
 /// shuffle mode.
 class SetShuffleModeResponse {
-  static SetShuffleModeResponse fromMap(Map<dynamic, dynamic> map) =>
-      SetShuffleModeResponse();
+  final List<int> shuffleIndices;
+
+  SetShuffleModeResponse({@required this.shuffleIndices});
+
+  static SetShuffleModeResponse fromMap(Map<dynamic, dynamic> map) => SetShuffleModeResponse(
+    shuffleIndices: map['shuffleIndices'] != null
+    ? map['shuffleIndices']
+    : null);
 }
 
 /// The shuffle mode communicated to the platform implementation.

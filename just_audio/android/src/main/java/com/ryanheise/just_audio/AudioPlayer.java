@@ -75,6 +75,7 @@ public class AudioPlayer implements MethodCallHandler, Player.EventListener, Aud
     private IcyInfo icyInfo;
     private IcyHeaders icyHeaders;
     private int errorCount;
+    private int[] shuffleIndices;
 
     private SimpleExoPlayer player;
     private Integer audioSessionId;
@@ -319,7 +320,9 @@ public class AudioPlayer implements MethodCallHandler, Player.EventListener, Aud
                 break;
             case "setShuffleMode":
                 setShuffleModeEnabled((Integer) request.get("shuffleMode") == 1);
-                result.success(new HashMap<String, Object>());
+                Map<String, Object> response = new HashMap<>();
+                response.put("shuffleIndices", shuffleIndices);
+                result.success(response);
                 break;
             case "setAutomaticallyWaitsToMinimizeStalling":
                 result.success(new HashMap<String, Object>());
@@ -415,7 +418,7 @@ public class AudioPlayer implements MethodCallHandler, Player.EventListener, Aud
 
     // Create a shuffle order optionally fixing the first index.
     private ShuffleOrder createShuffleOrder(int length, Integer firstIndex) {
-        int[] shuffleIndices = shuffle(length, firstIndex);
+        shuffleIndices = shuffle(length, firstIndex);
         return new DefaultShuffleOrder(shuffleIndices, random.nextLong());
     }
 
