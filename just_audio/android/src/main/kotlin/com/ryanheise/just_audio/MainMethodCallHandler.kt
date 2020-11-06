@@ -5,7 +5,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class MainMethodCallHandler(val applicationContext: Context, val binaryMessenger: BinaryMessenger): MethodChannel.MethodCallHandler {
+class MainMethodCallHandler(private val applicationContext: Context, private val binaryMessenger: BinaryMessenger): MethodChannel.MethodCallHandler {
     private val players = HashMap<String, AudioPlayer>()
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
