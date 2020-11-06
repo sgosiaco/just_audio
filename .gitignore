@@ -13,3 +13,14 @@ GeneratedPluginRegistrant.java
 GeneratedPluginRegistrant.swift
 build/
 .flutter-plugins
+.dart_tool/flutter_build/fed552535f863f7091f3e2167335fb3b/.filecache
+.dart_tool/flutter_build/3efe1a4f12ca9b7f96aa846527adf879/outputs.json
+.dart_tool/flutter_build/fed552535f863f7091f3e2167335fb3b/gen_localizations.stamp
+.dart_tool/flutter_build/3efe1a4f12ca9b7f96aa846527adf879/.filecache
+.dart_tool/flutter_build/fed552535f863f7091f3e2167335fb3b/outputs.json
+.dart_tool/flutter_build/3efe1a4f12ca9b7f96aa846527adf879/gen_localizations.stamp
+just_audio/macos/Classes/JustAudioPlugin.swift
+just_audio/lib/just_audio_web.dart
+just_audio/ios/Classes/SwiftJustAudioPlugin.swift
+just_audio/example/ios/Runner/AppDelegate.swift
+just_audio/example/ios/Runner/Runner-Bridging-Header.h
