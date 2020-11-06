@@ -10,14 +10,14 @@ class MainMethodCallHandler(val applicationContext: Context, val binaryMessenger
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         val request : Map<Any, Any> = call.arguments()
-        val id : String = request.get("id") as String
+        val id : String = request["id"] as String
         when (call.method) {
             "init" -> {
                 players[id] = AudioPlayer(applicationContext, binaryMessenger, id)
                 result.success(null)
             }
             "disposePlayer" -> {
-                val player : AudioPlayer? = players.get(id)
+                val player : AudioPlayer? = players[id]
                 player?.dispose()
                 players.remove(id)
                 result.success(HashMap<String, Any>()) //result.success(new HashMap<String, Object>());
