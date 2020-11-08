@@ -34,6 +34,7 @@ import kotlin.collections.HashMap
 class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id: String) : MethodCallHandler, Player.EventListener, AudioListener, MetadataOutput {
     private var eventSink: EventSink? = null
     private lateinit var processingState: ProcessingState
+    private val MAX_ERRORS = 5
     private var bufferedPosition: Long = 0
 
     private var seekPos: Long? = null
@@ -67,8 +68,8 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
                 broadcastPlaybackEvent()
             }
             when (processingState) {
-                ProcessingState.buffering -> handler.postDelayed(this, 200)
-                ProcessingState.ready -> if (playing) {
+                ProcessingState.Buffering -> handler.postDelayed(this, 200)
+                ProcessingState.Ready -> if (playing) {
                     handler.postDelayed(this, 500)
                 } else {
                     handler.postDelayed(this, 1000)
@@ -149,25 +150,25 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
         when (playbackState) {
             Player.STATE_READY -> {
                 if (prepareResult != null) {
-                    transition(ProcessingState.ready)
+                    transition(ProcessingState.Ready)
                     val response: MutableMap<String, Any> = HashMap()
                     response["duration"] = 1000 * duration
                     prepareResult!!.success(response)
                     prepareResult = null
                 } else {
-                    transition(ProcessingState.ready)
+                    transition(ProcessingState.Ready)
                 }
                 if (seekProcessed) {
                     completeSeek()
                 }
             }
-            Player.STATE_BUFFERING -> if (processingState != ProcessingState.buffering && processingState != ProcessingState.loading) {
-                transition(ProcessingState.buffering)
+            Player.STATE_BUFFERING -> if (processingState != ProcessingState.Buffering && processingState != ProcessingState.Loading) {
+                transition(ProcessingState.Buffering)
                 startWatchingBuffer()
             }
             Player.STATE_ENDED -> {
-                if (processingState != ProcessingState.completed) {
-                    transition(ProcessingState.completed)
+                if (processingState != ProcessingState.Completed) {
+                    transition(ProcessingState.Completed)
                 }
                 if (playResult != null) {
                     playResult!!.success(HashMap<String, Any>())
@@ -184,13 +185,13 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
             ExoPlaybackException.TYPE_SOURCE -> Log.e(TAG, "TYPE_SOURCE: " + error.sourceException.message)
             ExoPlaybackException.TYPE_RENDERER -> Log.e(TAG, "TYPE_RENDERER: " + error.rendererException.message)
             ExoPlaybackException.TYPE_UNEXPECTED -> Log.e(TAG, "TYPE_UNEXPECTED: " + error.unexpectedException.message)
-            ExoPlaybackException.TYPE_OUT_OF_MEMORY, ExoPlaybackException.TYPE_REMOTE -> {
-            }
+            ExoPlaybackException.TYPE_OUT_OF_MEMORY -> Log.e(TAG, "TYPE_OUT_OF_MEMORY: " + error.unexpectedException.message)
+            ExoPlaybackException.TYPE_REMOTE -> Log.e(TAG, "TYPE_REMOTE: " + error.unexpectedException.message)
             else -> Log.e(TAG, "default: " + error.unexpectedException.message)
         }
         sendError(error.type.toString(), error.message)
         errorCount++
-        if (player!!.hasNext() && currentIndex != null && errorCount <= 5) {
+        if (player!!.hasNext() && currentIndex != null && errorCount <= MAX_ERRORS) {
             val nextIndex = currentIndex!! + 1
             player!!.prepare(mediaSource!!)
             player!!.seekTo(nextIndex, 0)
@@ -408,9 +409,9 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
         initialPos = initialPosition
         this.initialIndex = initialIndex
         when (processingState) {
-            ProcessingState.none -> {
+            ProcessingState.None -> {
             }
-            ProcessingState.loading -> {
+            ProcessingState.Loading -> {
                 abortExistingConnection()
                 player!!.stop()
             }
@@ -418,7 +419,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
         }
         errorCount = 0
         prepareResult = result
-        transition(ProcessingState.loading)
+        transition(ProcessingState.Loading)
         if (player!!.shuffleModeEnabled) {
             setShuffleOrder(mediaSource, 0)
         }
@@ -482,16 +483,17 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
     }
 
     private val currentPosition: Long
-        get() = if (processingState == ProcessingState.none || processingState == ProcessingState.loading) {
+        get() = if (processingState == ProcessingState.None || processingState == ProcessingState.Loading) {
             0
         } else if (seekPos != null && seekPos != C.TIME_UNSET) {
             seekPos!! //TODO
         } else {
             player!!.currentPosition
         }
+
     private val duration: Long
         get() {
-            return if (processingState == ProcessingState.none || processingState == ProcessingState.loading) {
+            return if (processingState == ProcessingState.None || processingState == ProcessingState.Loading) {
                 C.TIME_UNSET
             } else {
                 player!!.duration
@@ -522,7 +524,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
         playResult = result
         startWatchingBuffer()
         player!!.playWhenReady = true
-        if (processingState == ProcessingState.completed && playResult != null) {
+        if (processingState == ProcessingState.Completed && playResult != null) {
             playResult!!.success(HashMap<String, Any>())
             playResult = null
         }
@@ -558,7 +560,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
     }
 
     private fun seek(position: Long, index: Int?, result: MethodChannel.Result) {
-        if (processingState == ProcessingState.none || processingState == ProcessingState.loading) {
+        if (processingState == ProcessingState.None || processingState == ProcessingState.Loading) {
             result.success(HashMap<String, Any>())
             return
         }
@@ -571,7 +573,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
     }
 
     fun dispose() {
-        if (processingState == ProcessingState.loading) {
+        if (processingState == ProcessingState.Loading) {
             abortExistingConnection()
         }
         mediaSources.clear()
@@ -580,7 +582,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
         if (player != null) {
             player!!.release()
             player = null
-            transition(ProcessingState.none)
+            transition(ProcessingState.None)
         }
         eventSink?.endOfStream()
     }
@@ -599,7 +601,7 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
     }
 
     internal enum class ProcessingState {
-        none, loading, buffering, ready, completed
+        None, Loading, Buffering, Ready, Completed
     }
 
     companion object {
@@ -643,6 +645,6 @@ class AudioPlayer(private val context: Context, messenger: BinaryMessenger?, id:
                 eventSink = null
             }
         })
-        processingState = ProcessingState.none
+        processingState = ProcessingState.None
     }
 }
